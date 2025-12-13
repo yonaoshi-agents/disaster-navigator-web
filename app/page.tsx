@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react"
 import { AlertTriangle, X, Check, Globe, MapPin, Clock, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Navigation } from "@/components/navigation"
+import { api } from "@/lib/api"
 
 const translations = {
   ja: {
@@ -16,14 +17,8 @@ const translations = {
     allDone: "すべての行動完了！",
     allDoneDesc: "安全を確保しました。自治体の指示に従ってください。",
     locating: "位置情報を取得中...",
-    actions: [
-      "窓や重い家具から離れる",
-      "揺れが続く場合はテーブルの下に入る",
-      "スマートフォンを充電する",
-      "避難経路を確認する",
-      "緊急持ち出し袋を準備する",
-      "自治体の指示を待つ",
-    ],
+    loading: "読み込み中...",
+    noData: "データがありません",
   },
   en: {
     earthquake: "EARTHQUAKE",
@@ -33,15 +28,8 @@ const translations = {
     allDone: "All Actions Complete!",
     allDoneDesc: "You're safe. Follow local authority instructions.",
     locating: "Locating...",
-    actions: [
-      "Move away from windows and heavy furniture",
-      "Get under a table if shaking continues",
-      "Charge your smartphone",
-      "Check evacuation routes",
-      "Prepare emergency supplies",
-      "Wait for local authority instructions",
-      "Wait for local authority instructions",
-    ],
+    loading: "Loading...",
+    noData: "No data available",
   },
 }
 
@@ -53,12 +41,33 @@ export default function DisasterAppV2() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationName, setLocationName] = useState<string | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
+  const [seismicIntensity, setSeismicIntensity] = useState<string | null>(null)
+  const [apiActions, setApiActions] = useState<string[] | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const startX = useRef(0)
 
   const t = translations[language]
-  const currentAction = t.actions[currentIndex]
-  const isComplete = currentIndex >= t.actions.length
+  const currentActions = apiActions || []
+  const currentAction = currentActions[currentIndex]
+  const isComplete = currentIndex >= currentActions.length
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const eqData = await api.getEarthquake()
+        setSeismicIntensity(eqData.seismic_intensity)
+
+        const email = localStorage.getItem('user_email') || 'yamada@example.com'
+        const actionsData = await api.getNextActions(email, eqData.seismic_intensity)
+        if (actionsData.cards && actionsData.cards.length > 0) {
+            setApiActions(actionsData.cards.map(c => c.message))
+        }
+      } catch (e) {
+        console.error("Failed to fetch API data:", e)
+      }
+    }
+    fetchData()
+  }, [])
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -165,7 +174,11 @@ export default function DisasterAppV2() {
           <h1 className="mb-2 text-4xl font-bold tracking-tight md:text-6xl">{t.earthquake}</h1>
 
           <div className="mb-8 text-center">
-            <div className="mb-4 text-7xl font-black md:text-9xl">5+</div>
+            {seismicIntensity ? (
+              <div className="mb-4 text-7xl font-black md:text-9xl">{seismicIntensity}</div>
+            ) : (
+               <div className="mb-4 text-4xl font-bold animate-pulse">{t.loading}</div>
+            )}
             <div className="text-xl font-semibold opacity-90 md:text-2xl">{t.shindo}</div>
           </div>
 
@@ -183,8 +196,14 @@ export default function DisasterAppV2() {
 
         {/* Bottom Half - Action Card */}
         <div className="relative flex flex-1 items-center justify-center bg-background p-6">
+          {currentActions.length === 0 ? (
+             <div className="text-center text-muted-foreground">
+               {seismicIntensity ? t.noData : t.loading}
+             </div>
+          ) : (
+          <>
           <div className="absolute inset-x-0 top-0 flex justify-center gap-1 pt-6">
-            {t.actions.map((_, idx) => (
+            {currentActions.map((_, idx) => (
               <div
                 key={idx}
                 className={`h-1.5 w-8 rounded-full transition-all ${
@@ -201,7 +220,7 @@ export default function DisasterAppV2() {
                   {t.nextAction}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {currentIndex + 1} / {t.actions.length}
+                  {currentIndex + 1} / {currentActions.length}
                 </div>
               </div>
 
@@ -280,6 +299,8 @@ export default function DisasterAppV2() {
               <h2 className="mb-3 text-3xl font-bold text-foreground">{t.allDone}</h2>
               <p className="text-lg text-muted-foreground">{t.allDoneDesc}</p>
             </div>
+          )}
+          </>
           )}
         </div>
       </div>

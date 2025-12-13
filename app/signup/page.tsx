@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle, Shield } from "lucide-react"
 import { Navigation } from "@/components/navigation"
+import { api } from "@/lib/api"
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -43,11 +44,23 @@ export default function SignUpPage() {
 
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      await api.createUser({
+        mailaddress: email,
+        password: password,
+        language: language,
+      })
+      
+      // Save user session
+      localStorage.setItem('user_email', email)
+      localStorage.setItem('user_language', language)
+      
       router.push("/subscribe")
-    }, 1500)
+    } catch (err: any) {
+      setError(err.message || "Failed to create account")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
