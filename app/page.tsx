@@ -3,23 +3,18 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { AlertTriangle, X, Check, Globe, MapPin, Clock } from "lucide-react"
+import { AlertTriangle, X, Check, Globe, MapPin, Clock, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Navigation } from "@/components/navigation"
 
 const translations = {
   ja: {
     earthquake: "地震",
-    magnitude: "マグニチュード",
-    location: "青森県",
+    shindo: "最大震度",
     time: "2分前",
-    depth: "深さ 10km",
     nextAction: "次のアクション",
-    swipeRight: "完了したら右にスワイプ",
-    swipeLeft: "できない場合は左にスワイプ",
     allDone: "すべての行動完了！",
     allDoneDesc: "安全を確保しました。自治体の指示に従ってください。",
-    yourLocation: "現在地",
     locating: "位置情報を取得中...",
     actions: [
       "窓や重い家具から離れる",
@@ -32,16 +27,11 @@ const translations = {
   },
   en: {
     earthquake: "EARTHQUAKE",
-    magnitude: "Magnitude",
-    location: "Aomori Prefecture",
+    shindo: "Max Seismic Intensity",
     time: "2 min ago",
-    depth: "Depth 10km",
     nextAction: "Next Action",
-    swipeRight: "Swipe right when done",
-    swipeLeft: "Swipe left if not possible",
     allDone: "All Actions Complete!",
     allDoneDesc: "You're safe. Follow local authority instructions.",
-    yourLocation: "Your Location",
     locating: "Locating...",
     actions: [
       "Move away from windows and heavy furniture",
@@ -61,6 +51,7 @@ export default function DisasterAppV2() {
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationName, setLocationName] = useState<string | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const startX = useRef(0)
@@ -72,11 +63,28 @@ export default function DisasterAppV2() {
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
+          const { latitude, longitude } = position.coords
           setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
+            lat: latitude,
+            lng: longitude,
           })
+          
+          // Reverse Geocoding using OpenStreetMap Nominatim API (Free, requires attribution)
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&accept-language=${language}`
+            )
+            const data = await response.json()
+            if (data && data.address) {
+                // Prioritize prefecture (state), then city, then town/village
+                const name = data.address.state || data.address.province || data.address.city || data.address.town || data.address.village || "Unknown Location"
+                setLocationName(name)
+            }
+          } catch (error) {
+            console.error("Error fetching address:", error)
+            // Fallback to coordinates if geocoding fails, but handled in render
+          }
         },
         (error) => {
           console.error("Error getting location:", error)
@@ -86,7 +94,7 @@ export default function DisasterAppV2() {
     } else {
       setLocationError("Geolocation is not supported by this browser.")
     }
-  }, [])
+  }, [language]) // Re-run when language changes to get address in correct language
 
   const handleTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX
@@ -157,31 +165,19 @@ export default function DisasterAppV2() {
           <h1 className="mb-2 text-4xl font-bold tracking-tight md:text-6xl">{t.earthquake}</h1>
 
           <div className="mb-8 text-center">
-            <div className="mb-4 text-7xl font-black md:text-9xl">6.2</div>
-            <div className="text-xl font-semibold opacity-90 md:text-2xl">{t.magnitude}</div>
+            <div className="mb-4 text-7xl font-black md:text-9xl">5+</div>
+            <div className="text-xl font-semibold opacity-90 md:text-2xl">{t.shindo}</div>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-4 text-sm opacity-90 md:gap-6 md:text-base">
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              {t.location}
+              {locationName || t.locating}
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
               {t.time}
             </div>
-            <div className="rounded-full bg-primary-foreground/20 px-3 py-1 text-sm font-semibold">{t.depth}</div>
-          </div>
-          
-          <div className="mt-4 flex flex-col items-center gap-1 text-xs opacity-75">
-             <div className="font-semibold">{t.yourLocation}:</div>
-             {userLocation ? (
-               <div>{userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}</div>
-             ) : locationError ? (
-                <div>Error: {locationError}</div>
-             ) : (
-               <div>{t.locating}</div>
-             )}
           </div>
         </div>
 
@@ -243,16 +239,20 @@ export default function DisasterAppV2() {
 
                   <div className="flex items-center justify-between gap-4 border-t border-border pt-6">
                     <div className="flex flex-1 items-center gap-2 text-destructive">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
-                        <X className="h-5 w-5" />
+                      <div className="flex items-center gap-1 animate-pulse">
+                        <ChevronsLeft className="h-6 w-6" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                          <X className="h-5 w-5" />
+                        </div>
                       </div>
-                      <div className="text-sm font-semibold">{t.swipeLeft}</div>
                     </div>
 
                     <div className="flex flex-1 items-center justify-end gap-2 text-success">
-                      <div className="text-right text-sm font-semibold">{t.swipeRight}</div>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
-                        <Check className="h-5 w-5" />
+                      <div className="flex items-center gap-1 animate-pulse">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
+                          <Check className="h-5 w-5" />
+                        </div>
+                        <ChevronsRight className="h-6 w-6" />
                       </div>
                     </div>
                   </div>
