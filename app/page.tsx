@@ -1,373 +1,251 @@
 "use client"
 
-import { useState } from "react"
-import { AlertTriangle, MessageSquare, Globe, Shield, Info, Check, Phone } from "lucide-react"
+import type React from "react"
+
+import { useState, useRef } from "react"
+import { AlertTriangle, X, Check, Globe, MapPin, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Navigation } from "@/components/navigation"
 
 const translations = {
   ja: {
-    title: "SafeGuide Japan",
-    subtitle: "緊急サポート",
     earthquake: "地震",
-    magnitude: "M6.2",
-    active: "発生中",
+    magnitude: "マグニチュード",
     location: "青森県",
-    timeAgo: "2分前",
-    alertInfo: "災害情報",
-    askAI: "AIに質問",
-    whatsHappening: "何が起きている？",
-    happeningDesc:
-      "青森県で14:23（日本時間）にマグニチュード6.2の地震が発生しました。余震が予想されます。落ち着いて安全指示に従ってください。",
-    epicenter: "震源地：青森市の北東40km",
-    depth: "深さ：10km（浅い）",
-    tsunami: "津波リスク：監視中",
-    actionItems: "行動チェックリスト",
-    doNot: "やってはいけないこと",
-    todos: [
+    time: "2分前",
+    depth: "深さ 10km",
+    nextAction: "次のアクション",
+    swipeRight: "完了したら右にスワイプ",
+    swipeLeft: "できない場合は左にスワイプ",
+    allDone: "すべての行動完了！",
+    allDoneDesc: "安全を確保しました。自治体の指示に従ってください。",
+    actions: [
       "窓や重い家具から離れる",
       "揺れが続く場合はテーブルの下に入る",
-      "スマートフォンを充電しておく",
-      "自治体の指示に従う",
-    ],
-    donts: [
-      "エレベーターを使用しない",
-      "損傷した建物に近づかない",
-      "避難指示が出た場合は自宅に戻らない",
-      "未確認の情報を拡散しない",
-    ],
-    aiAssistant: "AI緊急アシスタント",
-    aiSubtitle: "あなたの言語で質問してください",
-    aiWelcome: "こんにちは！質問にお答えします。例えば：",
-    aiExamples: ["• 「外出しても安全ですか？」", "• 「最寄りの病院はどこですか？」", "• 「大使館に連絡するには？」"],
-    quickQuestions: "よくある質問",
-    suggestedQuestions: [
-      "公共交通機関は使えますか？",
-      "ホテルのエリアは安全ですか？",
-      "余震があったらどうすればいい？",
-      "大使館への連絡方法は？",
-    ],
-    placeholder: "質問を入力してください...",
-    send: "送信",
-    emergencyContacts: "緊急連絡先",
-    contacts: [
-      { name: "緊急サービス", number: "110 / 119", desc: "警察 / 消防・救急" },
-      { name: "外国人旅行者向けホットライン", number: "050-3816-2787", desc: "24時間多言語対応" },
-      { name: "医療相談", number: "#7119", desc: "救急相談窓口" },
+      "スマートフォンを充電する",
+      "避難経路を確認する",
+      "緊急持ち出し袋を準備する",
+      "自治体の指示を待つ",
     ],
   },
   en: {
-    title: "SafeGuide Japan",
-    subtitle: "Emergency Support",
-    earthquake: "Earthquake",
-    magnitude: "M6.2",
-    active: "ACTIVE",
+    earthquake: "EARTHQUAKE",
+    magnitude: "Magnitude",
     location: "Aomori Prefecture",
-    timeAgo: "2 minutes ago",
-    alertInfo: "Alert Info",
-    askAI: "Ask AI",
-    whatsHappening: "What's Happening?",
-    happeningDesc:
-      "A magnitude 6.2 earthquake occurred in Aomori Prefecture at 14:23 JST. Aftershocks are expected. Stay calm and follow safety instructions.",
-    epicenter: "Epicenter: 40km northeast of Aomori City",
-    depth: "Depth: 10km (shallow)",
-    tsunami: "Tsunami risk: Monitoring",
-    actionItems: "Action Items",
-    doNot: "Do Not",
-    todos: [
-      "Stay away from windows and heavy furniture",
+    time: "2 min ago",
+    depth: "Depth 10km",
+    nextAction: "Next Action",
+    swipeRight: "Swipe right when done",
+    swipeLeft: "Swipe left if not possible",
+    allDone: "All Actions Complete!",
+    allDoneDesc: "You're safe. Follow local authority instructions.",
+    actions: [
+      "Move away from windows and heavy furniture",
       "Get under a table if shaking continues",
-      "Keep your phone charged",
-      "Follow local authorities instructions",
-    ],
-    donts: [
-      "Do not use elevators",
-      "Do not go near damaged buildings",
-      "Do not return home if evacuation ordered",
-      "Do not spread unverified information",
-    ],
-    aiAssistant: "AI Emergency Assistant",
-    aiSubtitle: "Ask questions in your language",
-    aiWelcome: "Hello! I can help answer your questions. Try asking:",
-    aiExamples: [
-      '• "Is it safe to go outside?"',
-      '• "Where is the nearest hospital?"',
-      '• "How do I contact my embassy?"',
-    ],
-    quickQuestions: "Quick Questions",
-    suggestedQuestions: [
-      "Can I use public transport?",
-      "Is my hotel area safe?",
-      "What if there's an aftershock?",
-      "How to contact embassy?",
-    ],
-    placeholder: "Type your question...",
-    send: "Send",
-    emergencyContacts: "Emergency Contacts",
-    contacts: [
-      { name: "Emergency Services", number: "110 / 119", desc: "Police / Fire & Ambulance" },
-      { name: "Tourist Hotline", number: "050-3816-2787", desc: "24/7 Multi-language" },
-      { name: "Medical Advice", number: "#7119", desc: "Non-emergency consultation" },
+      "Charge your smartphone",
+      "Check evacuation routes",
+      "Prepare emergency supplies",
+      "Wait for local authority instructions",
     ],
   },
 }
 
-export default function DisasterApp() {
+export default function DisasterAppV2() {
   const [language, setLanguage] = useState<"ja" | "en">("en")
-  const [activeTab, setActiveTab] = useState<"alert" | "chat">("alert")
-  const [checkedTodos, setCheckedTodos] = useState<Record<number, boolean>>({})
-
-  const toggleTodo = (idx: number) => {
-    setCheckedTodos((prev) => ({ ...prev, [idx]: !prev[idx] }))
-  }
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [dragX, setDragX] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const startX = useRef(0)
 
   const t = translations[language]
+  const currentAction = t.actions[currentIndex]
+  const isComplete = currentIndex >= t.actions.length
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return
+    const currentX = e.touches[0].clientX
+    const diff = currentX - startX.current
+    setDragX(diff)
+  }
+
+  const handleTouchEnd = () => {
+    setIsDragging(false)
+    if (Math.abs(dragX) > 100) {
+      setCurrentIndex((prev) => prev + 1)
+      setDragX(0)
+    } else {
+      setDragX(0)
+    }
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    startX.current = e.clientX
+    setIsDragging(true)
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return
+    const diff = e.clientX - startX.current
+    setDragX(diff)
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+    if (Math.abs(dragX) > 100) {
+      setCurrentIndex((prev) => prev + 1)
+      setDragX(0)
+    } else {
+      setDragX(0)
+    }
+  }
+
+  const opacity = 1 - Math.abs(dragX) / 300
+  const rotation = dragX / 20
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <Shield className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-foreground">{t.title}</h1>
-              <p className="text-xs text-muted-foreground">{t.subtitle}</p>
-            </div>
-          </div>
-
+    <>
+      <Navigation />
+      <div className="flex h-[calc(100vh-4rem)] flex-col bg-background">
+        {/* Top Half - Critical Information */}
+        <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-primary via-primary to-destructive p-8 text-primary-foreground">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setLanguage(language === "en" ? "ja" : "en")}
-            className="gap-2"
+            className="absolute right-4 top-20 gap-2 border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground"
           >
             <Globe className="h-4 w-4" />
-            {language === "en" ? "English" : "日本語"}
+            {language === "en" ? "EN" : "日"}
           </Button>
-        </div>
-      </header>
 
-      <div className="border-b border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="font-bold text-foreground">
-                  {t.earthquake} - {t.magnitude}
-                </h2>
-                <Badge variant="destructive" className="text-xs">
-                  {t.active}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {t.location} • {t.timeAgo}
-              </p>
+          <div className="mb-6 flex items-center gap-3">
+            <AlertTriangle className="h-12 w-12 animate-pulse" />
+          </div>
+
+          <h1 className="mb-2 text-4xl font-bold tracking-tight md:text-6xl">{t.earthquake}</h1>
+
+          <div className="mb-8 text-center">
+            <div className="mb-4 text-7xl font-black md:text-9xl">6.2</div>
+            <div className="text-xl font-semibold opacity-90 md:text-2xl">{t.magnitude}</div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm opacity-90 md:gap-6 md:text-base">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              {t.location}
             </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              {t.time}
+            </div>
+            <div className="rounded-full bg-primary-foreground/20 px-3 py-1 text-sm font-semibold">{t.depth}</div>
           </div>
         </div>
-      </div>
 
-      <div className="border-b border-border bg-card">
-        <div className="container mx-auto px-4">
-          <div className="flex gap-1">
-            <button
-              onClick={() => setActiveTab("alert")}
-              className={`flex flex-1 items-center justify-center gap-2 border-b-2 py-3 text-sm font-semibold transition-colors ${
-                activeTab === "alert"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <AlertTriangle className="h-4 w-4" />
-              {t.alertInfo}
-            </button>
-            <button
-              onClick={() => setActiveTab("chat")}
-              className={`flex flex-1 items-center justify-center gap-2 border-b-2 py-3 text-sm font-semibold transition-colors ${
-                activeTab === "chat"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <MessageSquare className="h-4 w-4" />
-              {t.askAI}
-            </button>
+        {/* Bottom Half - Action Card */}
+        <div className="relative flex flex-1 items-center justify-center bg-background p-6">
+          <div className="absolute inset-x-0 top-0 flex justify-center gap-1 pt-6">
+            {t.actions.map((_, idx) => (
+              <div
+                key={idx}
+                className={`h-1.5 w-8 rounded-full transition-all ${
+                  idx < currentIndex ? "bg-success" : idx === currentIndex ? "bg-primary" : "bg-muted"
+                }`}
+              />
+            ))}
           </div>
-        </div>
-      </div>
 
-      <main className="container mx-auto px-4 py-6 pb-24">
-        {activeTab === "alert" && (
-          <div className="mx-auto max-w-3xl space-y-5">
-            {/* What's Happening */}
-            <Card className="overflow-hidden border-l-4 border-l-primary">
-              <div className="p-5">
-                <div className="mb-3 flex items-center gap-2">
-                  <Info className="h-5 w-5 text-primary" />
-                  <h2 className="text-base font-bold text-foreground">{t.whatsHappening}</h2>
+          {!isComplete ? (
+            <div className="w-full max-w-md">
+              <div className="mb-4 text-center">
+                <div className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  {t.nextAction}
                 </div>
-                <p className="mb-4 text-sm leading-relaxed text-foreground">{t.happeningDesc}</p>
-                <div className="space-y-2 rounded-lg bg-muted/50 p-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    {t.epicenter}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    {t.depth}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    {t.tsunami}
-                  </div>
+                <div className="text-xs text-muted-foreground">
+                  {currentIndex + 1} / {t.actions.length}
                 </div>
               </div>
-            </Card>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="border-l-4 border-l-success">
-                <div className="p-5">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-success">
-                    <Shield className="h-4 w-4" />
-                    {t.actionItems}
-                  </h3>
-                  <ul className="space-y-2.5">
-                    {t.todos.map((item, idx) => (
-                      <li key={idx}>
-                        <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50">
-                          <input
-                            type="checkbox"
-                            checked={checkedTodos[idx] || false}
-                            onChange={() => toggleTodo(idx)}
-                            className="peer sr-only"
-                          />
-                          <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2 border-input bg-background transition-all peer-checked:border-success peer-checked:bg-success">
-                            <Check className="h-3.5 w-3.5 text-success-foreground opacity-0 peer-checked:opacity-100" />
-                          </div>
-                          <span
-                            className={`text-sm leading-tight transition-all ${
-                              checkedTodos[idx] ? "text-muted-foreground line-through" : "text-foreground"
-                            }`}
-                          >
-                            {item}
-                          </span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Card>
-
-              <Card className="border-l-4 border-l-destructive">
-                <div className="p-5">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    {t.doNot}
-                  </h3>
-                  <ul className="space-y-2.5">
-                    {t.donts.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-3 rounded-lg p-2">
-                        <div className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full border-2 border-destructive/20 bg-destructive/10" />
-                        <span className="text-sm leading-tight text-foreground">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "chat" && (
-          <div className="mx-auto max-w-3xl space-y-4">
-            <Card>
-              <div className="p-5">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <MessageSquare className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-foreground">{t.aiAssistant}</h2>
-                    <p className="text-xs text-muted-foreground">{t.aiSubtitle}</p>
-                  </div>
-                </div>
-
-                {/* Chat Messages */}
-                <div className="mb-4 space-y-3">
-                  <div className="flex gap-3">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <MessageSquare className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 rounded-2xl rounded-tl-sm bg-muted p-3">
-                      <p className="text-sm leading-relaxed text-foreground">{t.aiWelcome}</p>
-                      <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-                        {t.aiExamples.map((example, idx) => (
-                          <li key={idx}>{example}</li>
-                        ))}
-                      </ul>
+              <div
+                ref={cardRef}
+                className="relative touch-none select-none"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={() => {
+                  if (isDragging) {
+                    handleMouseUp()
+                  }
+                }}
+                style={{
+                  transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
+                  opacity: opacity,
+                  transition: isDragging ? "none" : "transform 0.3s ease, opacity 0.3s ease",
+                  cursor: isDragging ? "grabbing" : "grab",
+                }}
+              >
+                <div className="rounded-2xl border-4 border-border bg-card p-8 shadow-2xl">
+                  <div className="mb-8 flex justify-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <AlertTriangle className="h-8 w-8 text-primary" />
                     </div>
                   </div>
-                </div>
 
-                {/* Suggested Questions */}
-                <div className="mb-4">
-                  <p className="mb-2 text-xs font-semibold text-muted-foreground">{t.quickQuestions}</p>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {t.suggestedQuestions.map((question, idx) => (
-                      <Button
-                        key={idx}
-                        variant="outline"
-                        size="sm"
-                        className="h-auto justify-start py-2 text-left text-xs bg-transparent"
-                      >
-                        {question}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+                  <p className="mb-8 text-center text-2xl font-bold leading-tight text-card-foreground md:text-3xl">
+                    {currentAction}
+                  </p>
 
-                {/* Chat Input */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder={t.placeholder}
-                    className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                  <Button size="sm" className="px-4">
-                    {t.send}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="border-l-4 border-l-primary">
-              <div className="p-5">
-                <div className="mb-3 flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-bold text-foreground">{t.emergencyContacts}</h3>
-                </div>
-                <div className="space-y-2">
-                  {t.contacts.map((contact, idx) => (
-                    <div key={idx} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-foreground">{contact.name}</p>
-                        <p className="text-xs text-muted-foreground">{contact.desc}</p>
+                  <div className="flex items-center justify-between gap-4 border-t border-border pt-6">
+                    <div className="flex flex-1 items-center gap-2 text-destructive">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                        <X className="h-5 w-5" />
                       </div>
-                      <Button variant="default" size="sm" className="ml-3 shrink-0 text-xs font-bold">
-                        {contact.number}
-                      </Button>
+                      <div className="text-sm font-semibold">{t.swipeLeft}</div>
                     </div>
-                  ))}
+
+                    <div className="flex flex-1 items-center justify-end gap-2 text-success">
+                      <div className="text-right text-sm font-semibold">{t.swipeRight}</div>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
+                        <Check className="h-5 w-5" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {dragX > 50 && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-success p-4 shadow-xl">
+                    <Check className="h-8 w-8 text-success-foreground" />
+                  </div>
+                )}
+                {dragX < -50 && (
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-destructive p-4 shadow-xl">
+                    <X className="h-8 w-8 text-destructive-foreground" />
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="w-full max-w-md text-center">
+              <div className="mb-6 flex justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/10">
+                  <Check className="h-10 w-10 text-success" />
                 </div>
               </div>
-            </Card>
-          </div>
-        )}
-      </main>
-    </div>
+              <h2 className="mb-3 text-3xl font-bold text-foreground">{t.allDone}</h2>
+              <p className="text-lg text-muted-foreground">{t.allDoneDesc}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   )
 }
