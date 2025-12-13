@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { AlertTriangle, X, Check, Globe, MapPin, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Navigation } from "@/components/navigation"
@@ -19,6 +19,8 @@ const translations = {
     swipeLeft: "できない場合は左にスワイプ",
     allDone: "すべての行動完了！",
     allDoneDesc: "安全を確保しました。自治体の指示に従ってください。",
+    yourLocation: "現在地",
+    locating: "位置情報を取得中...",
     actions: [
       "窓や重い家具から離れる",
       "揺れが続く場合はテーブルの下に入る",
@@ -39,12 +41,15 @@ const translations = {
     swipeLeft: "Swipe left if not possible",
     allDone: "All Actions Complete!",
     allDoneDesc: "You're safe. Follow local authority instructions.",
+    yourLocation: "Your Location",
+    locating: "Locating...",
     actions: [
       "Move away from windows and heavy furniture",
       "Get under a table if shaking continues",
       "Charge your smartphone",
       "Check evacuation routes",
       "Prepare emergency supplies",
+      "Wait for local authority instructions",
       "Wait for local authority instructions",
     ],
   },
@@ -55,12 +60,33 @@ export default function DisasterAppV2() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationError, setLocationError] = useState<string | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const startX = useRef(0)
 
   const t = translations[language]
   const currentAction = t.actions[currentIndex]
   const isComplete = currentIndex >= t.actions.length
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          })
+        },
+        (error) => {
+          console.error("Error getting location:", error)
+          setLocationError(error.message)
+        },
+      )
+    } else {
+      setLocationError("Geolocation is not supported by this browser.")
+    }
+  }, [])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX
@@ -145,6 +171,17 @@ export default function DisasterAppV2() {
               {t.time}
             </div>
             <div className="rounded-full bg-primary-foreground/20 px-3 py-1 text-sm font-semibold">{t.depth}</div>
+          </div>
+          
+          <div className="mt-4 flex flex-col items-center gap-1 text-xs opacity-75">
+             <div className="font-semibold">{t.yourLocation}:</div>
+             {userLocation ? (
+               <div>{userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}</div>
+             ) : locationError ? (
+                <div>Error: {locationError}</div>
+             ) : (
+               <div>{t.locating}</div>
+             )}
           </div>
         </div>
 
