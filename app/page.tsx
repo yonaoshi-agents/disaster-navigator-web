@@ -362,8 +362,8 @@ export default function DisasterAppV2() {
                     </p>
                     <div className="flex w-full max-w-sm flex-col gap-2">
                       {[
-                        "What should I do immediately?",
                         "Where is the nearest shelter?",
+                        "What should I do immediately?",
                         "How do I prepare an emergency kit?",
                       ].map((question, idx) => (
                         <button
