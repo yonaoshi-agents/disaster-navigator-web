@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle, Shield } from "lucide-react"
 import { Navigation } from "@/components/navigation"
+import { api } from "@/lib/api"
 
 export default function SignInPage() {
   const router = useRouter()
@@ -30,11 +31,20 @@ export default function SignInPage() {
 
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      // API doesn't support password check yet, so we just check if user exists
+      const user = await api.getUser(email)
+      
+      // Save user session
+      localStorage.setItem('user_email', user.mailaddress)
+      localStorage.setItem('user_language', user.language)
+      
       router.push("/")
-    }, 1500)
+    } catch (err) {
+      setError("Invalid email or password")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
