@@ -83,7 +83,7 @@ export default function SafePage() {
               </div>
               <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  SafeGuide Japan is monitoring 24/7. We'll notify you immediately if a disaster occurs.
+                  NowWay is monitoring 24/7. We'll notify you immediately if a disaster occurs.
                 </p>
               </div>
             </CardContent>

@@ -59,7 +59,7 @@ export default function SignInPage() {
               </div>
             </div>
             <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-            <CardDescription>Sign in to your SafeGuide Japan account</CardDescription>
+            <CardDescription>Sign in to your NowWay account</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

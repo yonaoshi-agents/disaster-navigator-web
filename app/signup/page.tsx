@@ -84,7 +84,7 @@ export default function SignUpPage() {
               </div>
             </div>
             <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-            <CardDescription>Sign up for SafeGuide Japan to get protected during your travels</CardDescription>
+            <CardDescription>Sign up for NowWay to get protected during your travels</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

@@ -19,7 +19,7 @@ export function Navigation() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <Shield className="h-6 w-6" />
-          <span className="hidden sm:inline">SafeGuide Japan</span>
+          <span className="hidden sm:inline">NowWay</span>
         </Link>
 
         <div className="flex items-center gap-2">

@@ -56,7 +56,7 @@ export default function SubscribePage() {
                 <Shield className="h-8 w-8 text-primary" />
               </div>
             </div>
-            <h1 className="mb-2 text-3xl font-bold">Subscribe to SafeGuide Japan</h1>
+            <h1 className="mb-2 text-3xl font-bold">Subscribe to NowWay</h1>
             <p className="text-muted-foreground">
               Get covered before you travel. Access emergency support when disaster strikes.
             </p>
