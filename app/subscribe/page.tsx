@@ -60,7 +60,7 @@ export default function SubscribePage() {
     // Simulate payment processing
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/")
+      router.push("/safe")
     }, 2000)
   }
 
