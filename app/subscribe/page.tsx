@@ -2,56 +2,37 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Badge } from "@/components/ui/badge"
-import { Shield, Check, Calendar } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Shield, CalendarIcon } from "lucide-react"
 import { Navigation } from "@/components/navigation"
+import { cn } from "@/lib/utils"
 
-const plans = [
-  {
-    id: "basic",
-    name: "Basic Protection",
-    pricePerDay: 5,
-    features: [
-      "Real-time disaster alerts",
-      "Multi-language support",
-      "Emergency action guidance",
-      "24/7 access during disasters",
-    ],
-  },
-  {
-    id: "premium",
-    name: "Premium Protection",
-    pricePerDay: 10,
-    features: [
-      "Everything in Basic",
-      "AI-powered chatbot assistance",
-      "Priority emergency notifications",
-      "Offline access capability",
-      "Travel insurance coordination",
-    ],
-    recommended: true,
-  },
-]
+const PRICE_PER_DAY = 2
 
 export default function SubscribePage() {
   const router = useRouter()
-  const [days, setDays] = useState("")
-  const [selectedPlan, setSelectedPlan] = useState("premium")
+  const [startDate, setStartDate] = useState<Date | undefined>()
+  const [endDate, setEndDate] = useState<Date | undefined>()
   const [isLoading, setIsLoading] = useState(false)
 
+  const calculateDays = () => {
+    if (!startDate || !endDate) return 0
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays + 1 // Include both start and end dates
+  }
+
   const calculateTotal = () => {
-    const numDays = Number.parseInt(days) || 0
-    const plan = plans.find((p) => p.id === selectedPlan)
-    return numDays * (plan?.pricePerDay || 0)
+    const days = calculateDays()
+    return days * PRICE_PER_DAY
   }
 
   const handleSubscribe = () => {
-    if (!days || Number.parseInt(days) <= 0) {
+    if (!startDate || !endDate) {
       return
     }
 
@@ -68,83 +49,97 @@ export default function SubscribePage() {
     <>
       <Navigation />
       <div className="min-h-[calc(100vh-4rem)] bg-muted/30 p-4 py-12">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-2xl">
           <div className="mb-8 text-center">
             <div className="mb-4 flex justify-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <Shield className="h-8 w-8 text-primary" />
               </div>
             </div>
-            <h1 className="mb-2 text-3xl font-bold">Choose Your Protection Plan</h1>
+            <h1 className="mb-2 text-3xl font-bold">Subscribe to SafeGuide Japan</h1>
             <p className="text-muted-foreground">
               Get covered before you travel. Access emergency support when disaster strikes.
             </p>
           </div>
 
-          <div className="mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Travel Duration
-                </CardTitle>
-                <CardDescription>How many days will you be staying in Japan?</CardDescription>
-              </CardHeader>
-              <CardContent>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5" />
+                Travel Dates
+              </CardTitle>
+              <CardDescription>Select your travel start and end dates</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="days">Number of days</Label>
-                  <Input
-                    id="days"
-                    type="number"
-                    min="1"
-                    max="365"
-                    placeholder="Enter number of days"
-                    value={days}
-                    onChange={(e) => setDays(e.target.value)}
-                  />
+                  <label className="text-sm font-medium">Start Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, "PPP") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
 
-          <div className="mb-8">
-            <h2 className="mb-4 text-xl font-semibold">Select a Plan</h2>
-            <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan} className="grid gap-4 md:grid-cols-2">
-              {plans.map((plan) => (
-                <label key={plan.id} htmlFor={plan.id} className="cursor-pointer">
-                  <Card
-                    className={`relative transition-all ${
-                      selectedPlan === plan.id ? "border-primary ring-2 ring-primary" : "hover:border-primary/50"
-                    }`}
-                  >
-                    {plan.recommended && <Badge className="absolute -top-2 right-4">Recommended</Badge>}
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle>{plan.name}</CardTitle>
-                          <CardDescription className="mt-2">
-                            <span className="text-2xl font-bold text-foreground">${plan.pricePerDay}</span>
-                            <span className="text-muted-foreground"> / day</span>
-                          </CardDescription>
-                        </div>
-                        <RadioGroupItem value={plan.id} id={plan.id} />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {plan.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
-                            <span className="text-sm">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </label>
-              ))}
-            </RadioGroup>
-          </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">End Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, "PPP") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        disabled={(date) => {
+                          const today = new Date(new Date().setHours(0, 0, 0, 0))
+                          if (date < today) return true
+                          if (startDate && date < startDate) return true
+                          return false
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+
+              {startDate && endDate && (
+                <div className="rounded-lg bg-primary/5 p-4 text-center">
+                  <p className="text-sm text-muted-foreground">Selected Duration</p>
+                  <p className="text-2xl font-bold text-primary">{calculateDays()} days</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader>
@@ -152,16 +147,24 @@ export default function SubscribePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Plan:</span>
-                <span className="font-medium">{plans.find((p) => p.id === selectedPlan)?.name}</span>
+                <span className="text-muted-foreground">Start Date:</span>
+                <span className="font-medium">
+                  {startDate ? format(startDate, "PP") : "Not selected"}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">End Date:</span>
+                <span className="font-medium">
+                  {endDate ? format(endDate, "PP") : "Not selected"}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Duration:</span>
-                <span className="font-medium">{days || 0} days</span>
+                <span className="font-medium">{calculateDays()} days</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Price per day:</span>
-                <span className="font-medium">${plans.find((p) => p.id === selectedPlan)?.pricePerDay}</span>
+                <span className="font-medium">${PRICE_PER_DAY}</span>
               </div>
               <div className="border-t border-border pt-4">
                 <div className="flex justify-between">
@@ -173,7 +176,7 @@ export default function SubscribePage() {
             <CardFooter>
               <Button
                 onClick={handleSubscribe}
-                disabled={!days || Number.parseInt(days) <= 0 || isLoading}
+                disabled={!startDate || !endDate || isLoading}
                 className="w-full"
                 size="lg"
               >
