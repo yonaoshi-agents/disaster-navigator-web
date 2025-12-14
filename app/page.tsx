@@ -62,22 +62,14 @@ export default function DisasterAppV2() {
     const fetchData = async () => {
       try {
         // API calls commented out - using fixed data
-        // const eqData = await api.getEarthquake()
-        // setSeismicIntensity(eqData.seismic_intensity)
-        setSeismicIntensity("5-")
+        const eqData = await api.getEarthquake()
+        setSeismicIntensity(eqData.seismic_intensity)
 
-        // const email = localStorage.getItem('user_email') || 'yamada@example.com'
-        // const actionsData = await api.getNextActions(email, eqData.seismic_intensity)
-        // if (actionsData.cards && actionsData.cards.length > 0) {
-        //     setApiActions(actionsData.cards.map(c => c.message))
-        // }
-        setApiActions([
-          "Ensure your personal safety first",
-          "Check and extinguish any fire sources",
-          "Open doors and windows to secure evacuation routes",
-          "Put on shoes to protect your feet from broken glass",
-          "Check on the safety of your family members"
-        ])
+        const email = localStorage.getItem('user_email') || 'yamada@example.com'
+        const actionsData = await api.getNextActions(email, eqData.seismic_intensity)
+        if (actionsData.cards && actionsData.cards.length > 0) {
+            setApiActions(actionsData.cards.map(c => c.message))
+        }
       } catch (e) {
         console.error("Failed to fetch API data:", e)
       }

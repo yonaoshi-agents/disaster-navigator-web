@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
+import Image from "next/image"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Shield, CalendarIcon } from "lucide-react"
+import { CalendarIcon } from "lucide-react"
 import { Navigation } from "@/components/navigation"
 import { cn } from "@/lib/utils"
 
@@ -51,12 +53,7 @@ export default function SubscribePage() {
       <div className="min-h-[calc(100vh-4rem)] bg-muted/30 p-4 py-12">
         <div className="mx-auto max-w-2xl">
           <div className="mb-8 text-center">
-            <div className="mb-4 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Shield className="h-8 w-8 text-primary" />
-              </div>
-            </div>
-            <h1 className="mb-2 text-3xl font-bold">Subscribe to SafeGuide Japan</h1>
+            <h1 className="mb-2 text-3xl font-bold">Subscribe to NowWay</h1>
             <p className="text-muted-foreground">
               Get covered before you travel. Access emergency support when disaster strikes.
             </p>
