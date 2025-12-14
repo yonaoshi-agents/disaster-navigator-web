@@ -12,7 +12,7 @@ export function Navigation() {
   const navItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/subscribe", label: "Subscribe", icon: CreditCard },
-    { href: "/signin", label: "Sign In", icon: User },
+    //{ href: "/signin", label: "Sign In", icon: User },
   ]
 
   return (
@@ -20,7 +20,7 @@ export function Navigation() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <Image src="/product-icon.png" alt="NowWay" width={24} height={24} />
-          <span className="hidden sm:inline">NowWay</span>
+          <span>NowWay</span>
         </Link>
 
         <div className="flex items-center gap-2">
