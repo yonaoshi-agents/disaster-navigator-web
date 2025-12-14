@@ -233,10 +233,6 @@ export default function DisasterAppV2() {
 
           <div className="flex flex-wrap items-center justify-center gap-4 text-sm opacity-90 md:gap-6 md:text-base">
             <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              {locationName || t.locating}
-            </div>
-            <div className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
               {t.time}
             </div>
@@ -264,7 +260,7 @@ export default function DisasterAppV2() {
 
           {!isComplete ? (
             <div className="w-full max-w-md">
-              <div className="mb-4 text-center">
+              <div className="mb-4 mt-4 text-center">
                 <div className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   {t.nextAction}
                 </div>
@@ -342,7 +338,7 @@ export default function DisasterAppV2() {
             <div className="flex h-full w-full max-w-2xl flex-col">
               {/* Chat Header */}
               <div className="mb-4 text-center">
-                <div className="mb-2 flex items-center justify-center gap-2">
+                <div className="mb-2 flex items-center justify-center gap-2 mt-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
                     <Check className="h-5 w-5 text-success" />
                   </div>
