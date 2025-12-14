@@ -44,23 +44,32 @@ export default function SignUpPage() {
 
     setIsLoading(true)
 
-    try {
-      await api.createUser({
-        mailaddress: email,
-        password: password,
-        language: language,
-      })
-      
-      // Save user session
+    // API call commented out - using local simulation only
+    // try {
+    //   await api.createUser({
+    //     mailaddress: email,
+    //     password: password,
+    //     language: language,
+    //   })
+    //   
+    //   // Save user session
+    //   localStorage.setItem('user_email', email)
+    //   localStorage.setItem('user_language', language)
+    //   
+    //   router.push("/subscribe")
+    // } catch (err: any) {
+    //   setError(err.message || "Failed to create account")
+    // } finally {
+    //   setIsLoading(false)
+    // }
+
+    // Simulate account creation
+    setTimeout(() => {
       localStorage.setItem('user_email', email)
       localStorage.setItem('user_language', language)
-      
-      router.push("/subscribe")
-    } catch (err: any) {
-      setError(err.message || "Failed to create account")
-    } finally {
       setIsLoading(false)
-    }
+      router.push("/subscribe")
+    }, 1500)
   }
 
   return (
