@@ -354,10 +354,27 @@ export default function DisasterAppV2() {
               {/* Chat Messages */}
               <div className="mb-4 h-[400px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-4">
                 {messages.length === 0 ? (
-                  <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
-                    {language === "ja"
-                      ? "何か質問があればお気軽にお尋ねください"
-                      : "Feel free to ask any questions"}
+                  <div className="flex h-full flex-col items-center justify-center gap-6 p-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {language === "ja"
+                        ? "何か質問があればお気軽にお尋ねください"
+                        : "Feel free to ask any questions"}
+                    </p>
+                    <div className="flex w-full max-w-sm flex-col gap-2">
+                      {[
+                        "What should I do immediately?",
+                        "Where is the nearest shelter?",
+                        "How do I prepare an emergency kit?",
+                      ].map((question, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setInputMessage(question)}
+                          className="w-full rounded-lg border border-border bg-background px-4 py-3 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                        >
+                          {question}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
