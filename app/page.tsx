@@ -3,11 +3,11 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { AlertTriangle, X, Check, Globe, MapPin, Clock, ChevronsLeft, ChevronsRight, Send, MessageCircle } from "lucide-react"
+import { AlertTriangle, X, Check, Globe, MapPin, Clock, ChevronsLeft, ChevronsRight, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Navigation } from "@/components/navigation"
-import { api } from "@/lib/api"
+import { api, type ChatMessage } from "@/lib/api"
 
 const translations = {
   ja: {
@@ -22,7 +22,6 @@ const translations = {
     noData: "データがありません",
     chatPlaceholder: "質問を入力してください...",
     aiAssistant: "AI アシスタント",
-    askAI: "AIに相談する",
   },
   en: {
     earthquake: "EARTHQUAKE",
@@ -36,13 +35,7 @@ const translations = {
     noData: "No data available",
     chatPlaceholder: "Type your question...",
     aiAssistant: "AI Assistant",
-    askAI: "Ask AI",
   },
-}
-
-interface Message {
-  role: "user" | "assistant"
-  content: string
 }
 
 export default function DisasterAppV2() {
@@ -53,9 +46,9 @@ export default function DisasterAppV2() {
   const [locationName, setLocationName] = useState<string | null>(null)
   const [seismicIntensity, setSeismicIntensity] = useState<string | null>(null)
   const [apiActions, setApiActions] = useState<string[] | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState("")
-  const [showChat, setShowChat] = useState(false)
+  const [suggestions, setSuggestions] = useState<string[]>([])
   const cardRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const startX = useRef(0)
@@ -63,7 +56,7 @@ export default function DisasterAppV2() {
   const t = translations[language]
   const currentActions = apiActions || []
   const currentAction = currentActions[currentIndex]
-  const isComplete = currentIndex >= currentActions.length || showChat
+  const isComplete = currentIndex >= currentActions.length
 
   useEffect(() => {
     const fetchData = async () => {
@@ -175,20 +168,44 @@ export default function DisasterAppV2() {
     e.preventDefault()
     if (!inputMessage.trim()) return
 
-    const userMessage: Message = { role: "user", content: inputMessage }
-    setMessages((prev) => [...prev, userMessage])
+    const userMessage: ChatMessage = { role: "user", content: inputMessage }
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
     setInputMessage("")
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
-      const aiMessage: Message = {
+    try {
+      const response = await api.sendChatMessage(updatedMessages)
+      const aiMessage: ChatMessage = {
+        role: "assistant",
+        content: response.reply,
+      }
+      const finalMessages = [...updatedMessages, aiMessage]
+      setMessages(finalMessages)
+
+      // Fetch query suggestions after AI response
+      try {
+        const suggestResponse = await api.getQuerySuggestions(finalMessages)
+        setSuggestions(suggestResponse.suggest)
+      } catch (suggestError) {
+        console.error("Failed to fetch suggestions:", suggestError)
+        setSuggestions([])
+      }
+    } catch (error) {
+      console.error("Failed to send chat message:", error)
+      // Fallback response on error
+      const aiMessage: ChatMessage = {
         role: "assistant",
         content: language === "ja"
-          ? "ご質問ありがとうございます。安全確保を最優先にしてください。"
-          : "Thank you for your question. Please prioritize your safety.",
+          ? "申し訳ございません。エラーが発生しました。もう一度お試しください。"
+          : "Sorry, an error occurred. Please try again.",
       }
       setMessages((prev) => [...prev, aiMessage])
-    }, 1000)
+      setSuggestions([])
+    }
+  }
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputMessage(suggestion)
   }
 
   return (
@@ -255,24 +272,13 @@ export default function DisasterAppV2() {
 
           {!isComplete ? (
             <div className="w-full max-w-md">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex-1 text-center">
-                  <div className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                    {t.nextAction}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {currentIndex + 1} / {currentActions.length}
-                  </div>
+              <div className="mb-4 text-center">
+                <div className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  {t.nextAction}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowChat(true)}
-                  className="gap-2"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  {t.askAI}
-                </Button>
+                <div className="text-xs text-muted-foreground">
+                  {currentIndex + 1} / {currentActions.length}
+                </div>
               </div>
 
               <div
@@ -354,7 +360,7 @@ export default function DisasterAppV2() {
               </div>
 
               {/* Chat Messages */}
-              <div className="mb-4 flex-1 overflow-y-auto rounded-lg border border-border bg-muted/30 p-4">
+              <div className="mb-4 h-[400px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-4">
                 {messages.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
                     {language === "ja"
@@ -383,6 +389,22 @@ export default function DisasterAppV2() {
                   </div>
                 )}
               </div>
+
+              {/* Query Suggestions */}
+              {suggestions.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {suggestions.map((suggestion, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="rounded-full border border-border bg-muted px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Chat Input */}
               <form onSubmit={handleSendMessage} className="flex gap-2">
