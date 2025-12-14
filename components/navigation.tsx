@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Shield, Home, User, CreditCard } from "lucide-react"
+import { Home, User, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function Navigation() {
@@ -18,7 +19,7 @@ export function Navigation() {
     <nav className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
-          <Shield className="h-6 w-6" />
+          <Image src="/product-icon.png" alt="NowWay" width={24} height={24} />
           <span className="hidden sm:inline">NowWay</span>
         </Link>
 
