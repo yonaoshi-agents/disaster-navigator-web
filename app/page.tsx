@@ -3,8 +3,9 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { AlertTriangle, X, Check, Globe, MapPin, Clock, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { AlertTriangle, X, Check, Globe, MapPin, Clock, ChevronsLeft, ChevronsRight, Send, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Navigation } from "@/components/navigation"
 import { api } from "@/lib/api"
 
@@ -19,6 +20,9 @@ const translations = {
     locating: "位置情報を取得中...",
     loading: "読み込み中...",
     noData: "データがありません",
+    chatPlaceholder: "質問を入力してください...",
+    aiAssistant: "AI アシスタント",
+    askAI: "AIに相談する",
   },
   en: {
     earthquake: "EARTHQUAKE",
@@ -30,7 +34,15 @@ const translations = {
     locating: "Locating...",
     loading: "Loading...",
     noData: "No data available",
+    chatPlaceholder: "Type your question...",
+    aiAssistant: "AI Assistant",
+    askAI: "Ask AI",
   },
+}
+
+interface Message {
+  role: "user" | "assistant"
+  content: string
 }
 
 export default function DisasterAppV2() {
@@ -38,18 +50,20 @@ export default function DisasterAppV2() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationName, setLocationName] = useState<string | null>(null)
-  const [locationError, setLocationError] = useState<string | null>(null)
   const [seismicIntensity, setSeismicIntensity] = useState<string | null>(null)
   const [apiActions, setApiActions] = useState<string[] | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [inputMessage, setInputMessage] = useState("")
+  const [showChat, setShowChat] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const startX = useRef(0)
 
   const t = translations[language]
   const currentActions = apiActions || []
   const currentAction = currentActions[currentIndex]
-  const isComplete = currentIndex >= currentActions.length
+  const isComplete = currentIndex >= currentActions.length || showChat
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,11 +88,7 @@ export default function DisasterAppV2() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords
-          setUserLocation({
-            lat: latitude,
-            lng: longitude,
-          })
-          
+
           // Reverse Geocoding using OpenStreetMap Nominatim API (Free, requires attribution)
           try {
             const response = await fetch(
@@ -97,11 +107,8 @@ export default function DisasterAppV2() {
         },
         (error) => {
           console.error("Error getting location:", error)
-          setLocationError(error.message)
         },
       )
-    } else {
-      setLocationError("Geolocation is not supported by this browser.")
     }
   }, [language]) // Re-run when language changes to get address in correct language
 
@@ -150,6 +157,30 @@ export default function DisasterAppV2() {
 
   const opacity = 1 - Math.abs(dragX) / 300
   const rotation = dragX / 20
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputMessage.trim()) return
+
+    const userMessage: Message = { role: "user", content: inputMessage }
+    setMessages((prev) => [...prev, userMessage])
+    setInputMessage("")
+
+    // Simulate AI response (replace with actual API call)
+    setTimeout(() => {
+      const aiMessage: Message = {
+        role: "assistant",
+        content: language === "ja"
+          ? "ご質問ありがとうございます。安全確保を最優先にしてください。"
+          : "Thank you for your question. Please prioritize your safety.",
+      }
+      setMessages((prev) => [...prev, aiMessage])
+    }, 1000)
+  }
 
   return (
     <>
@@ -215,13 +246,24 @@ export default function DisasterAppV2() {
 
           {!isComplete ? (
             <div className="w-full max-w-md">
-              <div className="mb-4 text-center">
-                <div className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                  {t.nextAction}
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex-1 text-center">
+                  <div className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    {t.nextAction}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {currentIndex + 1} / {currentActions.length}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {currentIndex + 1} / {currentActions.length}
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowChat(true)}
+                  className="gap-2"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  {t.askAI}
+                </Button>
               </div>
 
               <div
@@ -290,14 +332,61 @@ export default function DisasterAppV2() {
               </div>
             </div>
           ) : (
-            <div className="w-full max-w-md text-center">
-              <div className="mb-6 flex justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/10">
-                  <Check className="h-10 w-10 text-success" />
+            <div className="flex h-full w-full max-w-2xl flex-col">
+              {/* Chat Header */}
+              <div className="mb-4 text-center">
+                <div className="mb-2 flex items-center justify-center gap-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
+                    <Check className="h-5 w-5 text-success" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground">{t.aiAssistant}</h2>
                 </div>
+                <p className="text-sm text-muted-foreground">{t.allDoneDesc}</p>
               </div>
-              <h2 className="mb-3 text-3xl font-bold text-foreground">{t.allDone}</h2>
-              <p className="text-lg text-muted-foreground">{t.allDoneDesc}</p>
+
+              {/* Chat Messages */}
+              <div className="mb-4 flex-1 overflow-y-auto rounded-lg border border-border bg-muted/30 p-4">
+                {messages.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
+                    {language === "ja"
+                      ? "何か質問があればお気軽にお尋ねください"
+                      : "Feel free to ask any questions"}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {messages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                            msg.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-card text-card-foreground border border-border"
+                          }`}
+                        >
+                          <p className="text-sm">{msg.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Input */}
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <Input
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder={t.chatPlaceholder}
+                  className="flex-1"
+                />
+                <Button type="submit" size="icon" disabled={!inputMessage.trim()}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
             </div>
           )}
           </>
